@@ -131,4 +131,4 @@ The same workflow applies to `internVL.py` and `Qwen 2_VL.py`. The Gemini script
 ## 🙏 Acknowledgments
 
 
-This repository provides the official code implementation accompanying the research conducted for the Master's thesis of Wilfred Okajevo, “Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding,” submitted in partial fulfillment of the requirements for the degree of Master of Science in Cognitive Science at Universität Osnabrück, under the supervision of Dr. Mohamad Ballout and Prof. Dr. Elia Bruni.
+This repository provides the official code implementation accompanying the research conducted for the Master's thesis of Wilfred Okajevo, “Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding,” submitted in fulfillment of the requirements for the degree of Master of Science in Cognitive Science at Universität Osnabrück, under the supervision of Dr. Mohamad Ballout and Prof. Dr. Elia Bruni.
