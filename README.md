@@ -45,7 +45,7 @@ Crucially, results show that while textual annotations significantly improve mod
 
 ## 🗂️ The SPLICE Benchmark
 
-The SPLICE benchmark is the core contribution of this work. It was created through a rigorous, multi-stage curation pipeline. **The full dataset is hosted on the [Hugging Face Hub](https://huggingface.co/datasets/prokajevo/splice_benchmark).**
+The SPLICE benchmark is the core contribution of this work. It was created through a rigorous, multi-stage curation pipeline. **The full dataset is hosted on the [Hugging Face Hub](https://huggingface.co/datasets/prokajevo/splice-benchmark).**
 
 -   **Source**: COIN Dataset (Comprehensive Instructional Video Analysis)
 -   **Size**: 3,381 validated videos, 11,423 event clips
