@@ -1,7 +1,3 @@
-Of course! Here is a comprehensive GitHub README.md file generated from the provided thesis and Python scripts. It encapsulates the project's goals, methodology, key findings, and instructions for reproducing the experiments.
-
----
-
 # Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments
 
 [![Paper Status: Under Review](https://img.shields.io/badge/Paper%20Status-Under%20Review%20(EMNLP%202025)-blue)](https://#)
