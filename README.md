@@ -127,7 +127,7 @@ The script will:
 The same workflow applies to `internVL.py` and `Qwen 2_VL.py`. The Gemini scripts (`gemini.py`, `gemini2.py`) will additionally handle file uploads and API rate limiting.
 
 
-
+```
 ## 🙏 Acknowledgments
 
 
