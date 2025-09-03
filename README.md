@@ -1,6 +1,6 @@
 # Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments
 
-[![Paper Status: Under Review](https://img.shields.io/badge/Paper%20Status-Under%20Review%20(EMNLP%202025)-blue)](https://#)
+[![Paper Status: Under Review](https://img.shields.io/badge/Paper%20Status-Under%20Review%20(EMNLP%202025)-blue)](https://openreview.net/forum?id=O5qq8NQbL2)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This repository contains the official code and resources for the Master's thesis, "Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding."
@@ -79,7 +79,7 @@ The benchmark is designed to probe five key dimensions of reasoning:
 Clone the repository and install the required dependencies.
 
 ```bash
-git clone https://github.com/your-username/out-of-order-mllms.git
+git clone https://github.com/prokajevo/OoOMLLM.git
 cd out-of-order-mllms
 pip install -r requirements.txt
 ```
