@@ -1,6 +1,6 @@
 # Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding
 
-[![Paper Status: Under Review](https://img.shields.io/badge/Paper%20Status-Under%20Review%20(EMNLP%202025)-blue)](https://openreview.net/forum?id=O5qq8NQbL2)
+[![Paper Status: Published EMNLP](https://img.shields.io/badge/Paper%20Status-Under%20Review%20(EMNLP%202025)-blue)]([https://openreview.net/forum?id=O5qq8NQbL2](https://aclanthology.org/2025.findings-emnlp.604/))
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Hugging Face Datasets](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Datasets-blue)](https://huggingface.co/datasets/prokajevo/splice-benchmark)
 
