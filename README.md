@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Hugging Face Datasets](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Datasets-blue)](https://huggingface.co/datasets/prokajevo/splice-benchmark)
 
-This repository contains the official code for the paper **"Can you SPLICE it together? A Human Curated Benchmark for Probing Visual Reasoning in VLMs"**, published in Findings of EMNLP 2025.
+This repository contains the official code for the paper **"Can you SPLICE it together? A Human Curated Benchmark for Probing Visual Reasoning in VLMs"**, published in Findings of EMNLP 2025. This work also formed the basis of the Master's thesis of Wilfred Okajevo, submitted in fulfillment of the requirements for the degree of Master of Science in Cognitive Science at Universitat Osnabruck.
 
 This research confronts the "evaluation deficit" in video understanding by introducing a novel video segment reordering task. We present **SPLICE** (Sequential Processing for Learning and Inference in Chronological Events), a human-curated benchmark designed to rigorously test an MLLM's grasp of temporal logic, causality, and multimodal event structure, moving beyond simple classification to probe deep, structural reasoning.
 
@@ -162,4 +162,4 @@ If you use this work in your research, please cite:
 
 ## 🙏 Acknowledgments
 
-This repository provides the official code implementation accompanying the paper "Can you SPLICE it together? A Human Curated Benchmark for Probing Visual Reasoning in VLMs," published in the Findings of EMNLP 2025. The research was conducted at Universitat Osnabruck under the supervision of Dr. Mohamad Ballout and Prof. Dr. Elia Bruni.
+This repository provides the official code implementation accompanying the paper "Can you SPLICE it together? A Human Curated Benchmark for Probing Visual Reasoning in VLMs," published in the Findings of EMNLP 2025. This work originated from the Master's thesis of Wilfred Okajevo, "Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding," submitted in fulfillment of the requirements for the degree of Master of Science in Cognitive Science at Universitat Osnabruck, under the supervision of Dr. Mohamad Ballout and Prof. Dr. Elia Bruni.
