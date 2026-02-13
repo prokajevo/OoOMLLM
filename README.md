@@ -26,7 +26,7 @@ Crucially, results show that while textual annotations significantly improve mod
 
 3.  **Performance Degrades with Complexity**: Model accuracy drops sharply as the number of video segments to reorder increases, indicating a struggle with maintaining long-range temporal coherence. Humans exhibit a much more graceful degradation.
 
-    
+
     *Figure 5.1 from the thesis: Binary accuracy versus the number of clip segments.*
 
 4.  **Weakness in Contextual & Spatial Reasoning**: Models perform relatively well on tasks driven by clear causal/temporal logic ("Make" tasks, ~68%) but fail catastrophically on tasks requiring contextual reasoning ("Change/Replace" tasks, ~32%) due to a strong *Visual Similarity Bias*. Spatial reasoning remains a profound weakness.
@@ -65,10 +65,15 @@ The benchmark is designed to probe five key dimensions of reasoning:
 ```
 .
 ├── gemini.py                   # Inference script for Gemini 1.5 Flash API
-├── gemini2.py                  # Inference script for Gemini 2.0 Flash API (experimental)
+├── gemini2.py                  # Inference script for Gemini 2.0 Flash API
 ├── internVL.py                 # Inference script for InternVL 2.5
 ├── LlavaOnevision.py           # Inference script for LLaVA-OneVision
-├── Qwen 2_VL.py                # Inference script for Qwen2-VL
+├── qwen2_vl.py                 # Inference script for Qwen2-VL
+├── utils/
+│   ├── __init__.py
+│   ├── data_loader.py          # Shared data loading utilities
+│   ├── evaluation.py           # Shared order extraction and accuracy computation
+│   └── io.py                   # Shared CSV output utilities
 ├── segment_metadata.json       # Metadata file with video paths and labels
 └── requirements.txt            # Python dependencies
 ```
@@ -81,52 +86,75 @@ Clone the repository and install the required dependencies.
 
 ```bash
 git clone https://github.com/prokajevo/OoOMLLM.git
-cd out-of-order-mllms
+cd OoOMLLM
 pip install -r requirements.txt
 ```
 
 ### 2. Dataset
 
-The SPLICE benchmark dataset is central to running these experiments. The `segment_metadata.json` file in this repository contains the paths and ground-truth information.
-
--   **Sample Data**: A sample of the benchmark can be found here: `[Placeholder for Google Drive link]`
--   **Full Dataset**: The full dataset will be made publicly available upon publication of the research paper. Please stay tuned for updates.
+The SPLICE benchmark dataset is central to running these experiments. The `segment_metadata.json` file in this repository contains the paths and ground-truth information. The full dataset is available on the [Hugging Face Hub](https://huggingface.co/datasets/prokajevo/splice-benchmark).
 
 Download the video clips and ensure the paths in `segment_metadata.json` correspond to their location on your local machine.
 
 ### 3. API Keys
 
-For experiments involving the Gemini models, you must configure your Google AI API key.
+For experiments involving the Gemini models, set your Google AI API key as an environment variable:
 
-```python
-# In gemini.py and gemini2.py
-genai.configure(api_key="YOUR_GEMINI_API_KEY")
+```bash
+export GEMINI_API_KEY="your-api-key-here"
 ```
+
+Alternatively, pass it directly via the `--api-key` flag when running gemini scripts.
 
 ## ▶️ Reproducing Experiments
 
-Each script is designed to run inference for a specific model on a subset of the SPLICE benchmark. The scripts can be configured by changing the `START_INDEX` and `END_INDEX` variables internally.
+All scripts accept command-line arguments for configuration:
+
+```bash
+# Common arguments for all scripts
+--start     # Start index for dataset slice (default varies per script)
+--end       # End index for dataset slice
+--seed      # Random seed for reproducibility (default: 42)
+--output    # Output CSV path
+--metadata  # Path to segment_metadata.json
+```
 
 **Example: Running the LLaVA-OneVision experiment**
 
-1.  Open `LlavaOnevision.py`.
-2.  Set the `START_INDEX` and `END_INDEX` to define the slice of the dataset you want to process.
-3.  Ensure the model name (`llava-hf/llava-onevision-qwen2-72b-ov-hf`) is correct and that you have sufficient GPU memory.
-4.  Run the script from the command line:
-
 ```bash
-python LlavaOnevision.py
+python LlavaOnevision.py --start 0 --end 100 --output results_llava.csv
 ```
 
-The script will:
+**Example: Running the Gemini 2.0 Flash experiment**
+
+```bash
+export GEMINI_API_KEY="your-key"
+python gemini2.py --start 0 --end 500 --output results_gemini2.csv
+```
+
+Each script will:
 -   Load the segment data from `segment_metadata.json`.
 -   For each video, load the shuffled clips.
 -   Preprocess the video frames and construct the prompt.
 -   Run inference to get the model's predicted order.
--   Save the results to a CSV file (e.g., `OOVVLABEL72B_7.csv`).
+-   Save the results to a CSV file.
 
-The same workflow applies to `internVL.py` and `Qwen 2_VL.py`. The Gemini scripts (`gemini.py`, `gemini2.py`) will additionally handle file uploads and API rate limiting.
+The same workflow applies to `internVL.py` and `qwen2_vl.py`. The Gemini scripts (`gemini.py`, `gemini2.py`) will additionally handle file uploads and API rate limiting.
+
+## 📖 Citation
+
+If you use this work in your research, please cite:
+
+```bibtex
+@inproceedings{okajevo2025outoforder,
+    title={Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding},
+    author={Okajevo, Wilfred},
+    booktitle={Findings of the Association for Computational Linguistics: EMNLP 2025},
+    year={2025},
+    url={https://aclanthology.org/2025.findings-emnlp.604/}
+}
+```
 
 ## 🙏 Acknowledgments
 
-This repository provides the official code implementation accompanying the research conducted for the Master's thesis of Wilfred Okajevo, “Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding,” submitted in fulfillment of the requirements for the degree of Master of Science in Cognitive Science at Universität Osnabrück, under the supervision of Dr. Mohamad Ballout and Prof. Dr. Elia Bruni.
+This repository provides the official code implementation accompanying the research conducted for the Master's thesis of Wilfred Okajevo, "Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding," submitted in fulfillment of the requirements for the degree of Master of Science in Cognitive Science at Universitat Osnabruck, under the supervision of Dr. Mohamad Ballout and Prof. Dr. Elia Bruni.

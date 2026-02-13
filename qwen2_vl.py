@@ -11,57 +11,25 @@
 import os
 import random
 import json
-import uuid
 import string
 import csv
 import torch
 import time
-from typing import Dict
+import re
+import argparse
+import numpy as np
 from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
 from qwen_vl_utils import process_vision_info
-import re
-import numpy as np
 
-output = 'Q4ExperimentVideoLabel10.csv'
-# Set random seed for reproducibility
-'''SEED = 42
-random.seed(SEED)
-torch.manual_seed(SEED)
-np.random.seed(SEED)'''
+from utils.data_loader import load_metadata
+from utils.evaluation import extract_video_numbers
+from utils.io import save_results_csv
 
 
-model = Qwen2VLForConditionalGeneration.from_pretrained(
-    "Qwen/Qwen2-VL-72B-Instruct-GPTQ-Int4",
-    torch_dtype=torch.bfloat16,
-    attn_implementation="flash_attention_2",
-    device_map="auto",
- )
-
-# default processer
-processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-72B-Instruct-GPTQ-Int4")
-
-"""
-model = Qwen2VLForConditionalGeneration.from_pretrained(
-    "Qwen/Qwen2-VL-7B-Instruct",
-    device_map="auto",
-    attn_implementation="flash_attention_2",  
-    torch_dtype=torch.float16,  
-)
-
-processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-7B-Instruct")
-
-"""
-# Load metadata
-def load_metadata(json_file):
-    with open(json_file, "r") as f:
-        return json.load(f)
-
-
-# Assign arbitrary filenames and shuffle loading order
 def randomize_segments(segments):
+    """Assign arbitrary filenames and shuffle loading order."""
     randomized_segments = []
     for seg in segments:
-        # Generate a random 6-character alphanumeric string
         arbitrary_name = f"{''.join(random.choices(string.ascii_letters + string.digits, k=6))}.mp4"
         seg["arbitrary_name"] = arbitrary_name
         print(f"Assigned Arbitrary Name: {arbitrary_name} to Original: {seg['output_path']}")
@@ -77,39 +45,9 @@ def create_message(randomized_segments, video_id):
         {
             "type": "video",
             "video": seg["output_path"],
-            #"filename": seg["arbitrary_name"],
         }
         for seg in randomized_segments
     ]
-    '''
-    labels_list = "\n".join([
-        f"- {seg.get('label', 'No label provided')}"
-        for seg in randomized_segments
-    ])
-    
-    # Prompt emphasizing random input order
-    prompt = (
-        f"These are parts of a video that have been randomly shuffled into {len(randomized_segments)} clips. "
-        "Each clip has a label describing its content. The input order of the clips is completely random and does not reflect their correct temporal sequence. "
-        "Your task is to reorder them into the correct temporal sequence based on their visual and contextual content, as well as the labels provided.\n\n"
-        f"Labels for the clips:\n{labels_list}\n\n"
-        "Important: Do not assume the input order reflects the correct temporal order.\n\n"
-        "Criteria for reordering:\n"
-        "1. **Visual content**: Analyze the actions, transitions, and scene changes in each clip.\n"
-        "2. **Temporal relationships**: Consider the logical progression of events (e.g., beginning, middle, end).\n"
-        "3. **Labels**: Use the labels to infer their logical order.\n\n"
-        "Return the result as a list of videos and their respective labels in their correct temporal order, such as 'video 3 - label, video 1 - label, video 2 - label'."
-    )'''
-    '''
-    prompt = (
-        f"The video has been split into {len(randomized_segments)} clips, shuffled randomly, and each clip is labeled as follows:\n{labels_list}\n\n"
-        "Note: The order of the labels corresponds directly to the shuffled order of the video clips.\n\n"
-        "Your task is to analyze each clip deeply to reorder them into the correct temporal sequence. Focus on:\n"
-        "1. **Visual content**: Examine the actions, transitions, scene details, and context within each clip.\n"
-        "2. **Temporal logic**: Identify the logical progression of events based on what happens before or after.\n"
-        "3. **Labels**: Leverage the labels to infer their proper chronological sequence.\n\n"
-        "Provide the reordered sequence as: 'Video X - [label text], Video Y - [label text], ...'."
-    )'''
 
     labels_list = "\n".join([
         f"- Video {i + 1}: {seg.get('label', 'No label provided')}"
@@ -130,7 +68,7 @@ def create_message(randomized_segments, video_id):
     return [
         {
             "role": "system",
-            "content": 'You are a strict assistant who always follows the user’s instructions precisely without making assumptions or skipping steps.',
+            "content": "You are a strict assistant who always follows the user's instructions precisely without making assumptions or skipping steps.",
         },
         {
             "role": "user",
@@ -138,13 +76,13 @@ def create_message(randomized_segments, video_id):
         }
     ]
 
-def infer_order(randomized_segments, video_id):
-    SCALING_RESOLUTIONS = [(224, 224), (160, 160), (112, 112)]  
+
+def infer_order(randomized_segments, video_id, model, processor):
+    SCALING_RESOLUTIONS = [(224, 224), (160, 160), (112, 112)]
     for resolution in SCALING_RESOLUTIONS:
         try:
             print(f"Trying resolution {resolution} for video {video_id}")
 
-            # Resize videos to the current resolution
             video_inputs = [
                 torch.nn.functional.interpolate(video, size=resolution)
                 for video in process_vision_info(create_message(randomized_segments, video_id))[1]
@@ -154,14 +92,14 @@ def infer_order(randomized_segments, video_id):
                 text=[processor.apply_chat_template(
                     create_message(randomized_segments, video_id),
                     tokenize=False,
-                    add_generation_prompt=True, 
-                    add_vision_id = True
+                    add_generation_prompt=True,
+                    add_vision_id=True
                 )],
                 videos=video_inputs,
                 padding=True,
                 return_tensors="pt"
             )
-            inputs = inputs.to("cuda") 
+            inputs = inputs.to("cuda")
 
             generated_ids = model.generate(**inputs, max_new_tokens=512)
             generated_ids_trimmed = [
@@ -176,9 +114,9 @@ def infer_order(randomized_segments, video_id):
 
         except RuntimeError as e:
             if "CUDA out of memory" in str(e):
-                torch.cuda.empty_cache()  
+                torch.cuda.empty_cache()
                 print(f"Out of memory at resolution {resolution}, trying lower resolution...")
-                continue  
+                continue
             else:
                 raise e
 
@@ -186,66 +124,42 @@ def infer_order(randomized_segments, video_id):
             del video_inputs, inputs
             torch.cuda.empty_cache()
 
-    # If all resolutions fail, raise an error
     raise RuntimeError(f"All resolutions failed for video {video_id}. Not enough memory.")
 
 
-def extract_video_ids(prediction_text):
-    """
-    Extract unique video IDs (e.g., Video 1, video 1, VIDEO 1) in order of appearance,
-    allowing for case insensitivity and minor format variations.
-    """
-    # Use regex to find matches in the form '(Video|video|VIDEO) N' (e.g., 'Video 1', 'video 2')
-    matches = re.findall(r'\b(?:Video|video|VIDEO) ?(\d+)\b', prediction_text, re.IGNORECASE)
-    # Prepend 'Video' to ensure uniform output format and return unique matches
-    return [f"Video {num}" for num in dict.fromkeys(matches)]
-
-
-
 def evaluate_predictions(prediction, ground_truth, randomized_segments):
-    # Extract predicted IDs (e.g., 'Video 1', 'Video 2') using the refined regex
-    predicted_ids = extract_video_ids(prediction)
+    predicted_ids = extract_video_numbers(prediction)
 
-    # Map input order to arbitrary names
     input_mapping = {f"Video {i+1}": seg["arbitrary_name"] for i, seg in enumerate(randomized_segments)}
-
-    # Map arbitrary names to original parts
     original_mapping = {seg["arbitrary_name"]: seg["part"] for seg in randomized_segments}
 
     try:
-        # Map predicted IDs back to arbitrary names
         predicted_arbitrary_names = [input_mapping[video_id] for video_id in predicted_ids]
-
-        # Map arbitrary names to ground truth parts
         predicted_order = [original_mapping[name] for name in predicted_arbitrary_names]
     except KeyError as e:
         print(f"KeyError: {e}. Ensure the arbitrary name exists in the mapping.")
         raise
 
-    # accuracy calculation
     correct = sum(p == gt for p, gt in zip(predicted_order, ground_truth))
     accuracy = correct / len(ground_truth) * 100
 
     return accuracy, predicted_order, prediction
 
 
-def save_partial_results(results, output_file=output):
-    file_exists = os.path.exists(output_file)
-
-    with open(output_file, mode="a", newline="") as file:
-        writer = csv.writer(file)
-        if not file_exists:
-            writer.writerow(["Video ID", "Ground Truth", "Predicted Order", "Accuracy", "Reasoning", "Resolution", 'Input'])
-        for result in results:
-            writer.writerow([
-                result["video_id"],
-                result["ground_truth"],
-                result["predicted_order"],
-                f"{result['accuracy']:.2f}%",
-                result["reasoning"],
-                f"{result['resolution'][0]}x{result['resolution'][1]}",
-                result["input"]
-            ])
+def save_partial_results(results, output_file):
+    header = ["Video ID", "Ground Truth", "Predicted Order", "Accuracy", "Reasoning", "Resolution", "Input"]
+    rows = []
+    for result in results:
+        rows.append([
+            result["video_id"],
+            result["ground_truth"],
+            result["predicted_order"],
+            f"{result['accuracy']:.2f}%",
+            result["reasoning"],
+            f"{result['resolution'][0]}x{result['resolution'][1]}",
+            result["input"]
+        ])
+    save_results_csv(rows, output_file, header)
 
 
 def log_memory(stage=""):
@@ -254,7 +168,7 @@ def log_memory(stage=""):
     print(f"{stage} - Memory Allocated: {allocated} bytes, Memory Reserved: {reserved} bytes")
 
 
-def process_videos(metadata_file, video_ids, batch_size=100, output_file=output):
+def process_videos(metadata_file, video_ids, model, processor, batch_size=100, output_file="output.csv"):
     metadata = load_metadata(metadata_file)
     results = []
     processed_count = 0
@@ -279,7 +193,7 @@ def process_videos(metadata_file, video_ids, batch_size=100, output_file=output)
 
         try:
             print(f"Starting inference for video {video_id}...")
-            prediction, resolution_used = infer_order(randomized_segments, video_id)
+            prediction, resolution_used = infer_order(randomized_segments, video_id, model, processor)
             print(f"Inference completed successfully for video {video_id} at resolution {resolution_used}.")
 
             accuracy, predicted_order, mapped_reasoning = evaluate_predictions(
@@ -293,7 +207,7 @@ def process_videos(metadata_file, video_ids, batch_size=100, output_file=output)
                 "predicted_order": predicted_order,
                 "accuracy": accuracy,
                 "reasoning": mapped_reasoning,
-                'input': [(item['part'], item['label']) for item in randomized_segments],
+                "input": [(item['part'], item['label']) for item in randomized_segments],
                 "resolution": resolution_used
             })
 
@@ -319,7 +233,6 @@ def process_videos(metadata_file, video_ids, batch_size=100, output_file=output)
             print(f"Intermediate results saved. {len(results)} entries written to {output_file}.")
             results.clear()
 
-    # Save any remaining results
     if results:
         print("\nSaving remaining results...")
         save_partial_results(results, output_file)
@@ -328,7 +241,6 @@ def process_videos(metadata_file, video_ids, batch_size=100, output_file=output)
     end_time = time.time()
     elapsed_time = end_time - start_time
 
-    # Final Summary
     print("\n=== Processing Summary ===")
     print(f"Total videos processed: {processed_count}")
     print(f"Successful: {success_count}")
@@ -337,16 +249,38 @@ def process_videos(metadata_file, video_ids, batch_size=100, output_file=output)
     print(f"Total runtime: {elapsed_time:.2f} seconds")
 
 
-def main(metadata_file, start_index=0, end_index=None, batch_size=100, output_file=output):
-    metadata = load_metadata(metadata_file)
-    
-    # Apply slicing to split the dataset
-    sliced_metadata = metadata[start_index:end_index]
+def main():
+    parser = argparse.ArgumentParser(description="Qwen2-VL video reordering inference")
+    parser.add_argument("--start", type=int, default=9000, help="Start index for dataset slice")
+    parser.add_argument("--end", type=int, default=9878, help="End index for dataset slice")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
+    parser.add_argument("--output", type=str, default="Q4ExperimentVideoLabel10.csv", help="Output CSV path")
+    parser.add_argument("--metadata", type=str, default="segment_metadata.json", help="Path to segment metadata JSON")
+    parser.add_argument("--batch-size", type=int, default=50, help="Save interval (batch size)")
+    args = parser.parse_args()
+
+    random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+
+    model = Qwen2VLForConditionalGeneration.from_pretrained(
+        "Qwen/Qwen2-VL-72B-Instruct-GPTQ-Int4",
+        torch_dtype=torch.bfloat16,
+        attn_implementation="flash_attention_2",
+        device_map="auto",
+    )
+
+    processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-72B-Instruct-GPTQ-Int4")
+
+    metadata = load_metadata(args.metadata)
+    sliced_metadata = metadata[args.start:args.end]
     video_ids = [video["video_id"] for video in sliced_metadata]
-    
-    print(f"Processing videos {start_index} to {end_index or len(metadata)}...")
-    process_videos(metadata_file, video_ids, batch_size=batch_size, output_file=output_file)
-    print(f"Processing complete! Results saved to {output_file}.")
+
+    print(f"Processing videos {args.start} to {args.end}...")
+    process_videos(args.metadata, video_ids, model, processor,
+                   batch_size=args.batch_size, output_file=args.output)
+    print(f"Processing complete! Results saved to {args.output}.")
 
 
-main("segment_metadata.json", start_index=9000, end_index=9878, batch_size=50, output_file=output)
+if __name__ == "__main__":
+    main()

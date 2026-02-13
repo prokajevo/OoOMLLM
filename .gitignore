@@ -1,0 +1,33 @@
+# Output files
+*.csv
+
+# SLURM output logs
+*.out
+slurm-*.txt
+!requirements.txt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.venv/
+venv/
+
+# Media files
+*.mp4
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

@@ -1,0 +1,11 @@
+torch>=2.0.0
+transformers>=4.38.0
+google-generativeai>=0.3.0
+Pillow
+decord
+av
+numpy
+pandas
+qwen-vl-utils
+peft
+torchvision

@@ -14,104 +14,34 @@ import time
 import re
 import random
 import subprocess
+import argparse
 from collections import deque
 
 import google.generativeai as genai
+
+from utils.data_loader import load_segment_data
+from utils.evaluation import extract_order_tags, compute_accuracy
+from utils.io import save_results_csv
 
 # -------------------------------------------------------------------
 # ----------------------- CONFIGURATIONS ----------------------------
 # -------------------------------------------------------------------
 
-# ✅ (1) Toggle whether to use descriptions with labels
 USE_DESCRIPTIONS = True
 
-# ✅ (2) Output CSV file path
-output_csv = "GeminiPaper5.csv"
+LABELS = ["BULL", "SPADE", "HEART", "DIAMOND", "CLUB", "STAR", "MOON", "SUN"]
 
-# ✅ (3) API Rate Limit Settings
 API_RATE_LIMIT = 10    # 10 requests per minute
 REQUEST_WINDOW = 60    # 60 seconds
 request_times = deque()
-
-# ✅ (4) Label set for indexing segments
-LABELS = ["BULL", "SPADE", "HEART", "DIAMOND", "CLUB", "STAR", "MOON", "SUN"]
-
-# ✅ (5) Gemini API Key (Replace with your own key!)
-genai.configure(api_key="") # Add your API key here
-
 
 
 # -------------------------------------------------------------------
 # ------------------------- CORE FUNCTIONS --------------------------
 # -------------------------------------------------------------------
 
-def load_segment_data(json_path="segment_metadata.json", start_index=0, end_index=None):
-    """
-    Loads video segment data, creating two dictionaries:
-      1) video_clips[video_id]: { label_text -> file_path } (shuffled for model input)
-      2) true_orders[video_id]: { label -> label_text } (correct chronological order)
-    """
-    if not os.path.exists(json_path):
-        raise FileNotFoundError(f"Segment data file not found: {json_path}")
-
-    with open(json_path, "r") as f:
-        segment_data = json.load(f)
-
-    if end_index is None:
-        end_index = len(segment_data)
-
-    segment_data = segment_data[start_index:end_index]
-
-    video_clips = {}
-    true_orders = {}
-
-    for video in segment_data:
-        video_id = video["video_id"]
-        segments = sorted(video["segments"], key=lambda x: x["part"])  
-
-        # Build "true order" mapping from just the labels (for final accuracy check)
-        # e.g. { "BULL" -> "BULL - 'insert money...'", "SPADE" -> "SPADE - 'press button'", ... }
-        to_map = {}
-        for i, seg in enumerate(segments):
-            base_label = LABELS[i]  # e.g. "BULL"
-            if USE_DESCRIPTIONS:
-                label_text = f"{base_label} - '{seg['label']}'"
-            else:
-                label_text = base_label
-            
-            to_map[base_label] = label_text  # for accuracy checking in order
-
-        # Now build a list of (label_text, file_path) for shuffling
-        list_of_pairs = []
-        for i, seg in enumerate(segments):
-            base_label = LABELS[i]
-            # We'll use the already-created text
-            label_text = to_map[base_label]     # e.g. "BULL - 'insert money...'"
-            file_path = seg["output_path"]      # actual path e.g. "video_segments/oDAY5PMwZgU_part_1.mp4"
-            list_of_pairs.append((label_text, file_path))
-
-        # Shuffle the pairs
-        random.shuffle(list_of_pairs)
-
-        # Convert to dictionary for model: { "BULL - 'desc'" -> "video_segments/..." }
-        shuffled_dict = {label_text: file_path for (label_text, file_path) in list_of_pairs}
-
-        # Save results
-        true_orders[video_id] = to_map       # keep correct chronological labels for accuracy
-        video_clips[video_id] = shuffled_dict
-
-        # For debugging, see partial results
-        print(f"[load_segment_data] Video {video_id}: True Orders -> {true_orders[video_id]}")
-        print(f"[load_segment_data] Video {video_id}: Shuffled Clips -> {video_clips[video_id]}")
-
-    return video_clips, true_orders
-
-
 def remove_audio(input_video):
-    """
-    Removes audio from the video using FFmpeg 
-    to reduce file size and anonymize audio.
-    """
+    """Removes audio from the video using FFmpeg to reduce file size and anonymize audio."""
     if not os.path.exists(input_video):
         raise FileNotFoundError(f"Video file not found: {input_video}")
 
@@ -119,10 +49,10 @@ def remove_audio(input_video):
     output_video = os.path.join(os.path.dirname(input_video), anonymized_filename)
 
     command = [
-        "ffmpeg", "-i", input_video, 
-        "-c:v", "copy", 
-        "-an", 
-        output_video, 
+        "ffmpeg", "-i", input_video,
+        "-c:v", "copy",
+        "-an",
+        output_video,
         "-y"
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -136,74 +66,72 @@ def upload_to_gemini(original_path, max_retries=5):
     Uses exponential backoff and checks file size before upload.
     """
     if not os.path.exists(original_path):
-        print(f"❌ File not found: {original_path}")
+        print(f"File not found: {original_path}")
         return None
 
+    temp_files = []
     attempt = 0
     while attempt < max_retries:
         try:
-            # Remove audio track to minimize size
             silent_video = remove_audio(original_path)
+            temp_files.append(silent_video)
 
-            # Rename to anonymize
             short_filename = f"{uuid.uuid4().hex[:6]}.mp4"
             anonymized_path = os.path.join(os.path.dirname(silent_video), short_filename)
             os.rename(silent_video, anonymized_path)
+            temp_files[-1] = anonymized_path  # Track renamed file
 
-            # Optional: Check file size (in MB)
             file_size = os.path.getsize(anonymized_path) / (1024 * 1024)
             if file_size > 50:
-                print(f"⚠️ File '{anonymized_path}' is too large ({file_size:.2f}MB). Consider resizing.")
+                print(f"File '{anonymized_path}' is too large ({file_size:.2f}MB). Consider resizing.")
                 return None
 
-            # Attempt upload
             file = genai.upload_file(anonymized_path)
-            print(f"✅ Uploaded file: {file.uri} (Short name: {short_filename}, ~{file_size:.2f}MB)")
+            print(f"Uploaded file: {file.uri} (Short name: {short_filename}, ~{file_size:.2f}MB)")
             return file
 
         except Exception as e:
-            print(f"⚠️ Upload failed (Attempt {attempt+1}/{max_retries}): {str(e)}")
-            time.sleep(2 ** attempt)  # Exponential backoff
+            print(f"Upload failed (Attempt {attempt+1}/{max_retries}): {str(e)}")
+            time.sleep(2 ** attempt)
             attempt += 1
+        finally:
+            for tf in temp_files:
+                try:
+                    os.remove(tf)
+                except OSError:
+                    pass
+            temp_files.clear()
 
-    print(f"❌ Final Upload Failure: {original_path}")
+    print(f"Final Upload Failure: {original_path}")
     return None
 
 
 def wait_for_files_active(files):
-    """
-    Waits until each uploaded file becomes ACTIVE before using it in a request.
-    """
+    """Waits until each uploaded file becomes ACTIVE before using it in a request."""
     for file in files:
         if file is None:
-            # If the file is None, it never uploaded successfully
-            raise Exception("❌ Some files were not uploaded successfully.")
+            raise Exception("Some files were not uploaded successfully.")
 
         while file.state.name == "PROCESSING":
             time.sleep(10)
             file = genai.get_file(file.name)
 
         if file.state.name != "ACTIVE":
-            raise Exception(f"❌ File '{file.name}' failed to process (State: {file.state.name})")
+            raise Exception(f"File '{file.name}' failed to process (State: {file.state.name})")
 
 
 def call_gemini_with_limit(parts):
-    """
-    Enforces API rate limit, then calls Gemini with the given prompt parts.
-    """
+    """Enforces API rate limit, then calls Gemini with the given prompt parts."""
     global request_times
 
     current_time = time.time()
-    # Remove old timestamps
     while request_times and request_times[0] < current_time - REQUEST_WINDOW:
         request_times.popleft()
 
-    # Check rate limit
     if len(request_times) >= API_RATE_LIMIT:
         time_to_wait = REQUEST_WINDOW - (current_time - request_times[0])
-        print(f"⏳ Rate limit reached! Waiting {round(time_to_wait, 2)}s before next request...")
+        print(f"Rate limit reached! Waiting {round(time_to_wait, 2)}s before next request...")
         time.sleep(time_to_wait)
-    print(parts)
 
     request_times.append(time.time())
     model = genai.GenerativeModel('models/gemini-2.0-flash')
@@ -216,20 +144,13 @@ def analyze_video_order(video_id, clips):
     waits for them to become ACTIVE, then sends them
     to Gemini with the correct prompt (labels or labels + descriptions).
     Returns the raw text response from Gemini.
-    
-    Experimental modification:
-    If the video has exactly 2 or 3 clips, a random clip is provided as text-only,
-    while the remaining clip(s) are attached as video files.
+
+    Half the clips are provided as text-only, the rest as video.
     """
     try:
-        # Upload each clip in the shuffled dictionary
         uploaded_files = {label: upload_to_gemini(path) for label, path in clips.items()}
-
-        # Ensure all files are active
         wait_for_files_active(uploaded_files.values())
 
-
-        # Pick the prompt based on description usage
         if USE_DESCRIPTIONS:
             prompt = (
                 f"A video has been split into {len(clips)} clips, shuffled randomly. Some clips are provided for some while text description is provided for others.\n"
@@ -250,28 +171,20 @@ def analyze_video_order(video_id, clips):
                 "'<order>Label X, Label Y, Label Z, ..., Explanation for order</order>'."
             )
 
-        # Build parts for Gemini
-
         parts = [prompt]
 
-                # Attach each label + file reference with modality adjustments:
-        # Attach each label + file reference with modality adjustments:
         num_clips = len(uploaded_files)
-        num_text_only = num_clips // 2  # Calculate how many should be text only
-        # Randomly select keys to be text only
+        num_text_only = num_clips // 2
         text_only_keys = random.sample(list(uploaded_files.keys()), num_text_only)
 
         for label, file_obj in uploaded_files.items():
             if label in text_only_keys:
-                # Text-only modality: include full label with description even if descriptions are globally disabled
                 parts.append(f"Clip (Text): {label}")
             else:
-                # Video modality: strip description (keep only the base label before " - ")
                 base_label = label.split(" - ")[0]
                 parts.append(f"Clip (Video): {base_label}")
                 parts.append(file_obj)
 
-        # Call Gemini
         response = call_gemini_with_limit(parts)
         if response and response.text:
             return response.text
@@ -282,84 +195,49 @@ def analyze_video_order(video_id, clips):
         return f"ERROR: {str(e)}"
 
 
-def compute_accuracy(predicted_order, true_order):
-    """
-    Extracts the predicted order from Gemini's response and compares 
-    it with the keys of `true_order` to compute a simple percentage accuracy.
-    """
-    # Try to find <order> ... </order> block
-    match = re.search(r"<order>(.*?)</order>", predicted_order, re.IGNORECASE | re.DOTALL)
-    if match:
-        extracted_text = match.group(1).strip()
-        # Extract only the label portion before " - "
-        predicted_labels = re.findall(r"Label ([A-Z]+)", extracted_text)
-    else:
-        predicted_labels = []
-
-    # Compare predicted_labels vs. the actual order (keys of true_order)
-    correct = sum(1 for pred, true_lbl in zip(predicted_labels, true_order.keys()) if pred == true_lbl)
-    accuracy = round((correct / len(true_order)) * 100, 2) if true_order else 0.0
-
-    return accuracy, predicted_labels
-
-
-def save_results(results, true_orders):
-    """
-    Saves the inference results into a CSV file. 
-    Each row includes:
-      - Video ID
-      - Predicted (extracted) labels
-      - True order (labels)
-      - Accuracy
-      - Full raw response
-    """
-    file_exists = os.path.exists(output_csv)
-
-    with open(output_csv, mode='a', newline='') as file:
-        writer = csv.writer(file)
-        # Write header only if file is new
-        if not file_exists:
-            writer.writerow(["Video ID", "Predicted Order", "True Order", "Accuracy (%)", "Full Response"])
-
-        for video_id, predicted_order in results.items():
-            # Keys of true_orders[video_id] represent the correct order in label terms
-            accuracy, predicted_labels = compute_accuracy(predicted_order, true_orders[video_id])
-            true_order_labels = list(true_orders[video_id].keys())  # e.g., ["BULL", "SPADE", ...]
-
-            writer.writerow([
-                video_id,
-                predicted_labels,
-                true_order_labels,
-                accuracy,
-                predicted_order
-            ])
+def process_and_save(results, true_orders, output_csv):
+    """Extract predictions from results and save to CSV."""
+    header = ["Video ID", "Predicted Order", "True Order", "Accuracy (%)", "Full Response"]
+    rows = []
+    for video_id, predicted_order in results.items():
+        order_text = extract_order_tags(predicted_order)
+        predicted_labels = re.findall(r"Label ([A-Z]+)", order_text) if order_text else []
+        true_order_labels = list(true_orders[video_id].keys())
+        accuracy = compute_accuracy(predicted_labels, true_order_labels)
+        rows.append([video_id, predicted_labels, true_order_labels, accuracy, predicted_order])
+    save_results_csv(rows, output_csv, header)
 
 
 def main():
-    """
-    Main entry point. 
-    - Prompts user for start/end indices.
-    - Loads segment data.
-    - Analyzes each video in range.
-    - Saves results to CSV.
-    """
-    # Let user specify portion of dataset
-    start_index = 800
-    end_index = 1000
+    """Main entry point."""
+    parser = argparse.ArgumentParser(description="Gemini 2.0 Flash video reordering inference")
+    parser.add_argument("--start", type=int, default=800, help="Start index for dataset slice")
+    parser.add_argument("--end", type=int, default=1000, help="End index for dataset slice")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
+    parser.add_argument("--output", type=str, default="GeminiPaper5.csv", help="Output CSV path")
+    parser.add_argument("--metadata", type=str, default="segment_metadata.json", help="Path to segment metadata JSON")
+    parser.add_argument("--api-key", type=str, default=None, help="Gemini API key (defaults to GEMINI_API_KEY env var)")
+    args = parser.parse_args()
 
-    video_data, true_orders = load_segment_data(start_index=start_index, end_index=end_index)
+    random.seed(args.seed)
+
+    api_key = args.api_key or os.environ["GEMINI_API_KEY"]
+    genai.configure(api_key=api_key)
+
+    video_data, true_orders = load_segment_data(
+        json_path=args.metadata, start_index=args.start, end_index=args.end,
+        labels=LABELS, use_descriptions=USE_DESCRIPTIONS
+    )
     results = {}
 
-    # Process each video
     for video_id, clips in video_data.items():
         print(f"--- Analyzing video_id: {video_id} ---")
         inference_result = analyze_video_order(video_id, clips)
         results[video_id] = inference_result
         print(f"Result for {video_id}: {inference_result}\n")
 
-    # Save final results
-    save_results(results, true_orders)
-    print(f"✅ Processed {len(results)} videos. Results saved in '{output_csv}'.")
+    process_and_save(results, true_orders, args.output)
+    print(f"Processed {len(results)} videos. Results saved in '{args.output}'.")
 
 
 if __name__ == "__main__":
