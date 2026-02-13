@@ -55,6 +55,14 @@ def extract_video_numbers(response):
     return [f"Video {num}" for num in dict.fromkeys(matches)]
 
 
+def strip_numbers(label):
+    """
+    Remove a leading number and an optional hyphen (with surrounding spaces)
+    from the label. For example, "3 - 'take out the goods'" becomes "'take out the goods'".
+    """
+    return re.sub(r'^\s*\d+\s*-\s*', '', label)
+
+
 def compute_accuracy(predicted_labels, true_labels):
     """
     Compute positional accuracy between predicted and true label sequences.

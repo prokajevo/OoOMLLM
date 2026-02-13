@@ -13,10 +13,10 @@ import numpy as np
 import torch
 from PIL import Image
 from transformers import AutoProcessor, LlavaOnevisionForConditionalGeneration
-import random, os, json, csv, re, argparse
+import random, os, argparse
 
 from utils.data_loader import load_segment_data
-from utils.evaluation import extract_order_tags
+from utils.evaluation import extract_order_tags, strip_numbers
 from utils.io import save_results_csv
 
 LABELS = ['1','2','3','4','5','6','7']
@@ -42,10 +42,6 @@ def read_video_pyav(container, indices):
         if i >= start_index and i in indices:
             frames.append(frame)
     return np.stack([x.to_ndarray(format="rgb24") for x in frames])
-
-
-def strip_numbers(label):
-    return re.sub(r'^\s*\d+\s*-\s*', '', label)
 
 
 if __name__ == "__main__":

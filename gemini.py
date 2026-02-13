@@ -8,12 +8,7 @@
 
 import os
 import uuid
-import json
-import csv
-import base64
-import mimetypes
 import random
-import re
 import time
 import subprocess
 import argparse
@@ -84,18 +79,6 @@ def wait_for_files_active(files):
         if file.state.name != "ACTIVE":
             raise Exception(f"File {file.name} failed to process")
     print("...all files ready\n")
-
-
-def encode_video(video_path):
-    """Encodes a video file into base64 format."""
-    if not os.path.exists(video_path):
-        raise FileNotFoundError(f"Video file not found: {video_path}")
-
-    mime_type, _ = mimetypes.guess_type(video_path)
-    with open(video_path, 'rb') as f:
-        video_data = base64.b64encode(f.read()).decode('utf-8')
-
-    return {"mime_type": mime_type, "data": video_data}
 
 
 def call_gemini_with_limit(parts):

@@ -1,10 +1,10 @@
-# Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding
+# Can you SPLICE it together? A Human Curated Benchmark for Probing Visual Reasoning in VLMs
 
-[![Paper Status: Published EMNLP](https://img.shields.io/badge/Paper%20Status-Published%20EMNLP%20(EMNLP%202025)-blue)](https://aclanthology.org/2025.findings-emnlp.604/)
+[![Paper](https://img.shields.io/badge/Paper-EMNLP%202025%20Findings-blue)](https://aclanthology.org/2025.findings-emnlp.604/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Hugging Face Datasets](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Datasets-blue)](https://huggingface.co/datasets/prokajevo/splice-benchmark)
 
-This repository contains the official code and resources for the Master's thesis, "Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding."
+This repository contains the official code for the paper **"Can you SPLICE it together? A Human Curated Benchmark for Probing Visual Reasoning in VLMs"**, published in Findings of EMNLP 2025.
 
 This research confronts the "evaluation deficit" in video understanding by introducing a novel video segment reordering task. We present **SPLICE** (Sequential Processing for Learning and Inference in Chronological Events), a human-curated benchmark designed to rigorously test an MLLM's grasp of temporal logic, causality, and multimodal event structure, moving beyond simple classification to probe deep, structural reasoning.
 
@@ -12,7 +12,7 @@ This research confronts the "evaluation deficit" in video understanding by intro
 
 ## 📜 Abstract
 
-The rapid advancement of Multimodal Large Language Models (MLLMs) has pushed capabilities into the complex domain of video understanding. However, current benchmarks often fail to robustly assess a model's grasp of temporal logic, being susceptible to linguistic shortcuts or focusing on simple classification. This thesis introduces a novel evaluation methodology: a video segment reordering task instantiated through the **SPLICE** benchmark.
+The rapid advancement of Multimodal Large Language Models (MLLMs) has pushed capabilities into the complex domain of video understanding. However, current benchmarks often fail to robustly assess a model's grasp of temporal logic, being susceptible to linguistic shortcuts or focusing on simple classification. This paper introduces a novel evaluation methodology: a video segment reordering task instantiated through the **SPLICE** benchmark.
 
 SPLICE is a human-curated benchmark derived from 3,381 instructional videos from the COIN dataset, segmented into 11,423 coherent event clips. Our extensive evaluation of leading MLLMs (including the Gemini and Qwen families) on SPLICE reveals a substantial performance gap. The best-performing model achieves a perfect sequence match accuracy of only **51%**, compared to a human baseline of approximately **85%**.
 
@@ -27,7 +27,7 @@ Crucially, results show that while textual annotations significantly improve mod
 3.  **Performance Degrades with Complexity**: Model accuracy drops sharply as the number of video segments to reorder increases, indicating a struggle with maintaining long-range temporal coherence. Humans exhibit a much more graceful degradation.
 
 
-    *Figure 5.1 from the thesis: Binary accuracy versus the number of clip segments.*
+    *Figure 5.1 from the paper: Binary accuracy versus the number of clip segments.*
 
 4.  **Weakness in Contextual & Spatial Reasoning**: Models perform relatively well on tasks driven by clear causal/temporal logic ("Make" tasks, ~68%) but fail catastrophically on tasks requiring contextual reasoning ("Change/Replace" tasks, ~32%) due to a strong *Visual Similarity Bias*. Spatial reasoning remains a profound weakness.
 
@@ -146,15 +146,20 @@ The same workflow applies to `internVL.py` and `qwen2_vl.py`. The Gemini scripts
 If you use this work in your research, please cite:
 
 ```bibtex
-@inproceedings{okajevo2025outoforder,
-    title={Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding},
-    author={Okajevo, Wilfred},
-    booktitle={Findings of the Association for Computational Linguistics: EMNLP 2025},
-    year={2025},
-    url={https://aclanthology.org/2025.findings-emnlp.604/}
+@inproceedings{ballout-etal-2025-splice,
+    title = "Can you {SPLICE} it together? A Human Curated Benchmark for Probing Visual Reasoning in {VLM}s",
+    author = "Ballout, Mohamad and Wilfred, Okajevo and Yaghoubi, Seyedalireza and Abdelmoneim, Nohayr Muhammad and Mayer, Julius and Bruni, Elia",
+    booktitle = "Findings of the Association for Computational Linguistics: EMNLP 2025",
+    month = nov,
+    year = "2025",
+    address = "Suzhou, China",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2025.findings-emnlp.604/",
+    doi = "10.18653/v1/2025.findings-emnlp.604",
+    pages = "11288--11309",
 }
 ```
 
 ## 🙏 Acknowledgments
 
-This repository provides the official code implementation accompanying the research conducted for the Master's thesis of Wilfred Okajevo, "Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding," submitted in fulfillment of the requirements for the degree of Master of Science in Cognitive Science at Universitat Osnabruck, under the supervision of Dr. Mohamad Ballout and Prof. Dr. Elia Bruni.
+This repository provides the official code implementation accompanying the paper "Can you SPLICE it together? A Human Curated Benchmark for Probing Visual Reasoning in VLMs," published in the Findings of EMNLP 2025. The research was conducted at Universitat Osnabruck under the supervision of Dr. Mohamad Ballout and Prof. Dr. Elia Bruni.

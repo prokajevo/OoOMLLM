@@ -9,28 +9,18 @@
 #SBATCH --output=Intern8B_VideoText1LABELRIGHT.txt
 
 import os
-import math
 import torch
 import torchvision.transforms as T
 import numpy as np
-import json
 import random
-import csv
-import re
 import argparse
 from PIL import Image
 from torchvision.transforms.functional import InterpolationMode
 from transformers import AutoTokenizer, AutoModel
 
 from utils.data_loader import load_segment_data
-from utils.evaluation import extract_order_tags
+from utils.evaluation import extract_order_tags, strip_numbers
 from utils.io import save_results_csv
-
-# Set random seed for reproducibility
-SEED = 42
-random.seed(SEED)
-torch.manual_seed(SEED)
-np.random.seed(SEED)
 
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STD  = (0.229, 0.224, 0.225)
@@ -105,14 +95,6 @@ def load_video(video_path, bound=None, input_size=448, max_num=1, num_segments=3
 
     pixel_values = torch.cat(pixel_values_list)
     return pixel_values, num_patches_list
-
-
-def strip_numbers(label):
-    """
-    Remove a leading number and an optional hyphen (with surrounding spaces)
-    from the label. For example, "3 - 'take out the goods'" becomes "'take out the goods'".
-    """
-    return re.sub(r'^\s*\d+\s*-\s*', '', label)
 
 
 def load_videos(video_paths, labels, num_segments=16, max_num=1, input_size=448):
