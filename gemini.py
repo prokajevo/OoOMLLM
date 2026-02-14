@@ -7,10 +7,8 @@
 #SBATCH --output=Gemini1.5FlashVideo4_run.txt
 
 import os
-import uuid
 import random
 import time
-import subprocess
 import argparse
 from collections import deque
 
@@ -18,27 +16,13 @@ import google.generativeai as genai
 
 from utils.data_loader import load_segment_data
 from utils.evaluation import extract_order_tags, extract_labels_from_order, compute_accuracy
-from utils.io import save_results_csv
+from utils.io import save_results_csv, remove_audio
 
 LABELS = ["BULL", "SPADE", "HEART", "DIAMOND", "CLUB", "STAR", "MOON", "SUN"]
 
 API_RATE_LIMIT = 10  # 10 requests per minute
 REQUEST_WINDOW = 60  # 60 seconds
 request_times = deque()
-
-
-def remove_audio(input_video):
-    """Removes audio from the video using FFmpeg."""
-    if not os.path.exists(input_video):
-        raise FileNotFoundError(f"Video file not found: {input_video}")
-
-    anonymized_filename = f"{uuid.uuid4().hex}.mp4"
-    output_video = os.path.join(os.path.dirname(input_video), anonymized_filename)
-
-    command = ["ffmpeg", "-i", input_video, "-c:v", "copy", "-an", output_video, "-y"]
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    return output_video
 
 
 def upload_to_gemini(original_path, mime_type=None, max_retries=5):
@@ -169,7 +153,9 @@ def main():
 
     random.seed(args.seed)
 
-    api_key = args.api_key or os.environ["GEMINI_API_KEY"]
+    api_key = args.api_key or os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise SystemExit("Error: Gemini API key not provided. Set GEMINI_API_KEY or use --api-key.")
     genai.configure(api_key=api_key)
 
     save_interval = 10

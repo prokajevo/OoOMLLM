@@ -9,17 +9,15 @@
 import os
 import uuid
 import time
-import re
 import random
-import subprocess
 import argparse
 from collections import deque
 
 import google.generativeai as genai
 
 from utils.data_loader import load_segment_data
-from utils.evaluation import extract_order_tags, compute_accuracy
-from utils.io import save_results_csv
+from utils.evaluation import extract_order_tags, extract_labels_from_order, compute_accuracy
+from utils.io import save_results_csv, remove_audio
 
 # -------------------------------------------------------------------
 # ----------------------- CONFIGURATIONS ----------------------------
@@ -37,26 +35,6 @@ request_times = deque()
 # -------------------------------------------------------------------
 # ------------------------- CORE FUNCTIONS --------------------------
 # -------------------------------------------------------------------
-
-def remove_audio(input_video):
-    """Removes audio from the video using FFmpeg to reduce file size and anonymize audio."""
-    if not os.path.exists(input_video):
-        raise FileNotFoundError(f"Video file not found: {input_video}")
-
-    anonymized_filename = f"{uuid.uuid4().hex}.mp4"
-    output_video = os.path.join(os.path.dirname(input_video), anonymized_filename)
-
-    command = [
-        "ffmpeg", "-i", input_video,
-        "-c:v", "copy",
-        "-an",
-        output_video,
-        "-y"
-    ]
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    return output_video
-
 
 def upload_to_gemini(original_path, max_retries=5):
     """
@@ -199,7 +177,7 @@ def process_and_save(results, true_orders, output_csv):
     rows = []
     for video_id, predicted_order in results.items():
         order_text = extract_order_tags(predicted_order)
-        predicted_labels = re.findall(r"Label ([A-Z]+)", order_text) if order_text else []
+        predicted_labels = extract_labels_from_order(order_text, LABELS) if order_text else []
         true_order_labels = list(true_orders[video_id].keys())
         accuracy = compute_accuracy(predicted_labels, true_order_labels)
         rows.append([video_id, predicted_labels, true_order_labels, accuracy, predicted_order])
@@ -219,7 +197,9 @@ def main():
 
     random.seed(args.seed)
 
-    api_key = args.api_key or os.environ["GEMINI_API_KEY"]
+    api_key = args.api_key or os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise SystemExit("Error: Gemini API key not provided. Set GEMINI_API_KEY or use --api-key.")
     genai.configure(api_key=api_key)
 
     video_data, true_orders = load_segment_data(
