@@ -2,7 +2,7 @@
 
 [![Paper](https://img.shields.io/badge/Paper-EMNLP%202025%20Findings-blue)](https://aclanthology.org/2025.findings-emnlp.604/)
 [![Thesis](https://img.shields.io/badge/Thesis-PDF-red)](docs/Out_of_Order_MLLM_Thesis.pdf)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: BSD-3](https://img.shields.io/badge/License-BSD%203--Clause-orange.svg)](LICENSE)
 [![Hugging Face Datasets](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Datasets-blue)](https://huggingface.co/datasets/prokajevo/splice-benchmark)
 
 This repository contains the official code for the paper **"Can you SPLICE it together? A Human Curated Benchmark for Probing Visual Reasoning in VLMs"**, published in Findings of EMNLP 2025. This work also formed the basis of the Master's thesis **"Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding"** by Wilfred Okajevo, submitted in fulfillment of the requirements for the degree of Master of Science in Cognitive Science at Universität Osnabrück.
