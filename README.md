@@ -1,7 +1,7 @@
 # Can you SPLICE it together? A Human Curated Benchmark for Probing Visual Reasoning in VLMs
 
 [![Paper](https://img.shields.io/badge/Paper-EMNLP%202025%20Findings-blue)](https://aclanthology.org/2025.findings-emnlp.604/)
-[![Thesis](https://img.shields.io/badge/Thesis-PDF-red)](docs/Out_of_Order_Evaluating_MLLMs_on_Reordering_Shuffled_Video_Segments_Temporal_Logic_and_Multimodal_Event_Understanding.pdf)
+[![Thesis](https://img.shields.io/badge/Thesis-PDF-red)](docs/Out_of_Order_MLLM_Thesis.pdf)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Hugging Face Datasets](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Datasets-blue)](https://huggingface.co/datasets/prokajevo/splice-benchmark)
 
@@ -94,7 +94,7 @@ The benchmark is designed to probe five key dimensions of reasoning:
 │   └── io.py                   # Shared CSV output utilities
 ├── assets/                     # Figures and plots for documentation
 ├── docs/
-│   └── Out_of_Order_Evaluating_MLLMs_...pdf  # Full Master's thesis
+│   └── Out_of_Order_MLLM_Thesis.pdf   # Full Master's thesis
 ├── segment_metadata.json       # Metadata file with video paths and labels
 └── requirements.txt            # Python dependencies
 ```
@@ -166,7 +166,7 @@ The same workflow applies to `internVL.py` and `qwen2_vl.py`. The Gemini scripts
 
 The full Master's thesis, which provides extended methodology, analysis, and discussion beyond the conference paper, is available in this repository:
 
-**[Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding](docs/Out_of_Order_Evaluating_MLLMs_on_Reordering_Shuffled_Video_Segments_Temporal_Logic_and_Multimodal_Event_Understanding.pdf)**
+**[Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding](docs/Out_of_Order_MLLM_Thesis.pdf)**
 
 ## 📖 Citation
 
