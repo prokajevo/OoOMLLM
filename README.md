@@ -26,10 +26,21 @@ Crucially, results show that while textual annotations significantly improve mod
 
 3.  **Performance Degrades with Complexity**: Model accuracy drops sharply as the number of video segments to reorder increases, indicating a struggle with maintaining long-range temporal coherence. Humans exhibit a much more graceful degradation.
 
-
-    *Figure 5.1 from the paper: Binary accuracy versus the number of clip segments.*
+<p align="center">
+  <img src="assets/vlm_performance_by_clip_length.png" width="600" alt="Binary accuracy versus the number of clip segments">
+  <br>
+  <em>Binary accuracy versus the number of clip segments.</em>
+</p>
 
 4.  **Weakness in Contextual & Spatial Reasoning**: Models perform relatively well on tasks driven by clear causal/temporal logic ("Make" tasks, ~68%) but fail catastrophically on tasks requiring contextual reasoning ("Change/Replace" tasks, ~32%) due to a strong *Visual Similarity Bias*. Spatial reasoning remains a profound weakness.
+
+<p align="center">
+  <img src="assets/vlm_performance_by_domain.png" width="600" alt="VLM performance by domain">
+  <br>
+  <img src="assets/vlm_performance_by_duration.png" width="600" alt="VLM performance by duration">
+  <br>
+  <em>VLM performance across domains (top) and video durations (bottom).</em>
+</p>
 
 ### Performance Summary
 
@@ -46,6 +57,12 @@ Crucially, results show that while textual annotations significantly improve mod
 ## 🗂️ The SPLICE Benchmark
 
 The SPLICE benchmark is the core contribution of this work. It was created through a rigorous, multi-stage curation pipeline. **The full dataset is hosted on the [Hugging Face Hub](https://huggingface.co/datasets/prokajevo/splice-benchmark).**
+
+<p align="center">
+  <img src="assets/splice-pipeline1.png" width="700" alt="SPLICE benchmark curation pipeline">
+  <br>
+  <em>The multi-stage SPLICE benchmark curation pipeline.</em>
+</p>
 
 -   **Source**: COIN Dataset (Comprehensive Instructional Video Analysis)
 -   **Size**: 3,381 validated videos, 11,423 event clips
@@ -74,6 +91,9 @@ The benchmark is designed to probe five key dimensions of reasoning:
 │   ├── data_loader.py          # Shared data loading utilities
 │   ├── evaluation.py           # Shared order extraction and accuracy computation
 │   └── io.py                   # Shared CSV output utilities
+├── assets/                     # Figures and plots for documentation
+├── docs/
+│   └── Out_of_Order_Thesis.pdf # Full Master's thesis
 ├── segment_metadata.json       # Metadata file with video paths and labels
 └── requirements.txt            # Python dependencies
 ```
@@ -140,6 +160,12 @@ Each script will:
 -   Save the results to a CSV file.
 
 The same workflow applies to `internVL.py` and `qwen2_vl.py`. The Gemini scripts (`gemini.py`, `gemini2.py`) will additionally handle file uploads and API rate limiting.
+
+## 📄 Thesis
+
+The full Master's thesis, which provides extended methodology, analysis, and discussion beyond the conference paper, is available in this repository:
+
+**[Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding](docs/Out_of_Order_Thesis.pdf)**
 
 ## 📖 Citation
 
