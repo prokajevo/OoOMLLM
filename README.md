@@ -11,7 +11,7 @@ This research confronts the "evaluation deficit" in video understanding by intro
 
 ---
 
-## 📜 Abstract
+## Abstract
 
 The rapid advancement of Multimodal Large Language Models (MLLMs) has pushed capabilities into the complex domain of video understanding. However, current benchmarks often fail to robustly assess a model's grasp of temporal logic, being susceptible to linguistic shortcuts or focusing on simple classification. This paper introduces a novel evaluation methodology: a video segment reordering task instantiated through the **SPLICE** benchmark.
 
@@ -19,7 +19,7 @@ SPLICE is a human-curated benchmark derived from 3,381 instructional videos from
 
 Crucially, results show that while textual annotations significantly improve model performance, they have no effect on human accuracy, indicating a strong reliance on language priors over genuine visual understanding in current MLLMs. This work not only quantifies the limitations of MLLMs but also validates the reordering task as a rigorous diagnostic tool for driving future progress in building more capable AI systems.
 
-## 📊 Key Findings
+## Key Findings
 
 1.  **Significant Human-Model Performance Gap**: Even state-of-the-art models lag significantly behind the human baseline of 84.9% binary accuracy. The best model, Gemini-2.0-Flash-Exp, scored 51.1%.
 
@@ -55,7 +55,7 @@ Crucially, results show that while textual annotations significantly improve mod
 | LLaVA-OneVision-72B    | 0.2260               | 0.4256               | 0.4210             |
 | **Random Baseline**    | **0.2114**           | **0.2114**           | -                  |
 
-## 🗂️ The SPLICE Benchmark
+## The SPLICE Benchmark
 
 The SPLICE benchmark is the core contribution of this work. It was created through a rigorous, multi-stage curation pipeline. **The full dataset is hosted on the [Hugging Face Hub](https://huggingface.co/datasets/prokajevo/splice-benchmark).**
 
@@ -78,7 +78,7 @@ The benchmark is designed to probe five key dimensions of reasoning:
 4.  **Spatial Reasoning**: Interpreting trajectories and orientations.
 5.  **Commonsense Reasoning**: Applying prior world knowledge.
 
-## ⚙️ Repository Structure
+## Repository Structure
 
 ```
 .
@@ -99,7 +99,7 @@ The benchmark is designed to probe five key dimensions of reasoning:
 └── requirements.txt            # Python dependencies
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Installation
 
@@ -127,7 +127,7 @@ export GEMINI_API_KEY="your-api-key-here"
 
 Alternatively, pass it directly via the `--api-key` flag when running gemini scripts.
 
-## ▶️ Reproducing Experiments
+## Reproducing Experiments
 
 All scripts accept command-line arguments for configuration:
 
@@ -162,13 +162,13 @@ Each script will:
 
 The same workflow applies to `internVL.py` and `qwen2_vl.py`. The Gemini scripts (`gemini.py`, `gemini2.py`) will additionally handle file uploads and API rate limiting.
 
-## 📄 Thesis
+## Thesis
 
 The full Master's thesis, which provides extended methodology, analysis, and discussion beyond the conference paper, is available in this repository:
 
 **[Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding](docs/Out_of_Order_MLLM_Thesis.pdf)**
 
-## 📖 Citation
+## Citation
 
 If you use this work in your research, please cite:
 
@@ -187,6 +187,6 @@ If you use this work in your research, please cite:
 }
 ```
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 This repository provides the official code implementation accompanying the paper "Can you SPLICE it together? A Human Curated Benchmark for Probing Visual Reasoning in VLMs," published in the Findings of EMNLP 2025. This work originated from the Master's thesis of Wilfred Okajevo, "Out of Order: Evaluating MLLMs on Reordering Shuffled Video Segments, Temporal Logic, and Multimodal Event Understanding," submitted in fulfillment of the requirements for the degree of Master of Science in Cognitive Science at Universität Osnabrück, under the supervision of Dr. Mohamad Ballout and Prof. Dr. Elia Bruni.

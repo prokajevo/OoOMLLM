@@ -20,8 +20,8 @@ from utils.io import save_results_csv, remove_audio
 
 LABELS = ["BULL", "SPADE", "HEART", "DIAMOND", "CLUB", "STAR", "MOON", "SUN"]
 
-API_RATE_LIMIT = 10  # 10 requests per minute
-REQUEST_WINDOW = 60  # 60 seconds
+API_RATE_LIMIT = 10
+REQUEST_WINDOW = 60
 request_times = deque()
 
 

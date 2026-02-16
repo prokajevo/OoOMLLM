@@ -166,7 +166,7 @@ if __name__ == "__main__":
     )
 
     csv_header = ["Video ID", "Input Order", "True Order", "Output Order", "Response"]
-    save_results_csv([], args.output, csv_header)  # Write header
+    save_results_csv([], args.output, csv_header)
 
     for video_id, clips_dict in video_clips.items():
         print(f"--- Processing Video ID: {video_id} ---")

@@ -52,7 +52,6 @@ def load_segment_data(json_path="segment_metadata.json", start_index=0, end_inde
         segments = sorted(video["segments"], key=lambda x: x["part"])
 
         if use_descriptions:
-            # Build label_text with descriptions (gemini2, internVL, LlavaOnevision style)
             to_map = {}
             for i, seg in enumerate(segments):
                 base_label = labels[i]
@@ -70,7 +69,6 @@ def load_segment_data(json_path="segment_metadata.json", start_index=0, end_inde
             video_clips[video_id] = {lt: fp for lt, fp in list_of_pairs}
             true_orders[video_id] = to_map
         else:
-            # Simple label -> path mapping (gemini.py style)
             true_orders[video_id] = {
                 labels[i]: seg["output_path"] for i, seg in enumerate(segments)
             }

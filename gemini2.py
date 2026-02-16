@@ -19,22 +19,14 @@ from utils.data_loader import load_segment_data
 from utils.evaluation import extract_order_tags, extract_labels_from_order, compute_accuracy
 from utils.io import save_results_csv, remove_audio
 
-# -------------------------------------------------------------------
-# ----------------------- CONFIGURATIONS ----------------------------
-# -------------------------------------------------------------------
-
 USE_DESCRIPTIONS = True
 
 LABELS = ["BULL", "SPADE", "HEART", "DIAMOND", "CLUB", "STAR", "MOON", "SUN"]
 
-API_RATE_LIMIT = 10    # 10 requests per minute
-REQUEST_WINDOW = 60    # 60 seconds
+API_RATE_LIMIT = 10
+REQUEST_WINDOW = 60
 request_times = deque()
 
-
-# -------------------------------------------------------------------
-# ------------------------- CORE FUNCTIONS --------------------------
-# -------------------------------------------------------------------
 
 def upload_to_gemini(original_path, max_retries=5):
     """
@@ -55,7 +47,7 @@ def upload_to_gemini(original_path, max_retries=5):
             short_filename = f"{uuid.uuid4().hex[:6]}.mp4"
             anonymized_path = os.path.join(os.path.dirname(silent_video), short_filename)
             os.rename(silent_video, anonymized_path)
-            temp_files[-1] = anonymized_path  # Track renamed file
+            temp_files[-1] = anonymized_path
 
             file_size = os.path.getsize(anonymized_path) / (1024 * 1024)
             if file_size > 50:
